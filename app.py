@@ -23,7 +23,7 @@ def load_model() -> torch.nn.Module:
     model_path = os.path.join(os.path.dirname(__file__), 'Best_resnet50.pth')
     print(f"Loading model from: {model_path}")
 
-    model = models.resnet50(pretrained=True)
+    model = models.resnet50(pretrained=False)
     
     for param in model.parameters():
         param.requires_grad = False
