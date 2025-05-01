@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pneumonia Detector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-animation"></div>
+    
+    <header class="header">
+        <h1 class="title glow">🫁 Pneumonia Detector</h1>
+        <p class="subtitle">Upload your chest X-ray image and let AI do the rest.</p>
+    </header>
+
+    <main class="container">
+        <div class="upload-container" id="uploadContainer">
+            <div class="upload-area" id="dropZone">
+                <img src="{{ url_for('static', filename='upload-icon.svg') }}" alt="Upload icon" class="upload-icon" id="uploadIcon">
+                <p class="upload-text">Drag & Drop your X-ray here or Browse</p>
+                <input type="file" id="fileInput" accept="image/*" hidden>
+                <button class="browse-btn" id="browseBtn" onclick="document.getElementById('fileInput').click()">Choose File</button>
+            </div>
+
+            <div class="preview-container" id="previewContainer" hidden>
+                <img id="imagePreview" alt="X-ray preview" class="preview-image">
+                <button class="remove-btn" id="removeBtn">×</button>
+            </div>
+
+            <button class="analyze-btn" id="analyzeBtn" disabled>
+                <span class="btn-text">🔍 Analyze X-ray</span>
+                <div class="spinner" hidden></div>
+            </button>
+        </div>
+
+        <div class="result-card" id="resultCard" hidden>
+            <div class="result-header">
+                <span class="result-icon" id="resultIcon"></span>
+                <h2 class="result-title">Analysis Result</h2>
+            </div>
+            <div class="result-content">
+                <p class="prediction">Prediction: <span id="predictionText"></span></p>
+                <p class="confidence">Confidence: <span id="confidenceText"></span></p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>Made By Youssef Ahmed | Email: yosefahmed1952004@gmail.com</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html> 
