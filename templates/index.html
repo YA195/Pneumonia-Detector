@@ -23,7 +23,7 @@
                 <img src="{{ url_for('static', filename='upload-icon.svg') }}" alt="Upload icon" class="upload-icon" id="uploadIcon">
                 <p class="upload-text">Drag & Drop your X-ray here or Browse</p>
                 <input type="file" id="fileInput" accept="image/*" hidden>
-                <button class="browse-btn" id="browseBtn" onclick="document.getElementById('fileInput').click()">Choose File</button>
+                <button class="browse-btn" id="browseBtn">Choose File</button>
             </div>
 
             <div class="preview-container" id="previewContainer" hidden>
@@ -55,4 +55,4 @@
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
-</html> 
+</html>

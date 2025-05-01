@@ -16,17 +16,18 @@ let selectedFile = null;
 dropZone.addEventListener('dragover', handleDragOver);
 dropZone.addEventListener('dragleave', handleDragLeave);
 dropZone.addEventListener('drop', handleDrop);
-browseBtn.addEventListener('click', handleBrowseClick);
-fileInput.addEventListener('change', handleFileSelect);
+browseBtn.removeEventListener('click', handleBrowseClick); // Remove any existing listeners
+browseBtn.addEventListener('click', handleBrowseClick, false);
+fileInput.removeEventListener('change', handleFileSelect);
+fileInput.addEventListener('change', handleFileSelect, false);
 removeBtn.addEventListener('click', resetUpload);
 analyzeBtn.addEventListener('click', analyzeImage);
 
 function handleBrowseClick(e) {
     e.preventDefault();
-    fileInput.value = ''; 
+    e.stopPropagation(); // Stop event propagation
     fileInput.click();
 }
-
 
 function handleDragOver(e) {
     e.preventDefault();
@@ -47,14 +48,22 @@ function handleDrop(e) {
 }
 
 function handleFileSelect(e) {
+    e.preventDefault(); // Prevent default behavior
     const files = e.target.files;
-    handleFiles(files);
+    if (files && files.length > 0) {
+        handleFiles(files);
+    }
 }
 
 function handleFiles(files) {
     if (files.length === 0) return;
     
     const file = files[0];
+    
+    if (selectedFile && selectedFile.name === file.name) {
+        return;
+    }
+
     if (!isValidImageFile(file)) {
         showError('Please upload a valid image file (JPG, JPEG, or PNG)');
         return;
