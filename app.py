@@ -19,24 +19,87 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 def allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def load_model() -> torch.nn.Module:
-    model_path = os.path.join(os.path.dirname(__file__), 'Best_resnet50.pth')
-    print(f"Loading model from: {model_path}")
+def load_models() -> list:
+    model_paths = {
+        'densenet': 'best_densenet_model.pth',
+        'mobilenet': 'Best_mobilenet.pth',
+        'efficientnet': 'best_efficientnet_model.pth',
+        'vgg': 'best_vgg16_model.pth'
+    }
 
-    model = models.resnet50(pretrained=False)
-    
-    for param in model.parameters():
-        param.requires_grad = False
-    
-    model.fc = torch.nn.Sequential(
+    models_list = []
+
+    model_path = os.path.join(os.path.dirname(__file__), model_paths['densenet'])
+    model = models.densenet121(pretrained=False)
+    model.classifier = torch.nn.Sequential(
         torch.nn.Dropout(0.5),
-        torch.nn.Linear(model.fc.in_features, 1)
+        torch.nn.Linear(model.classifier.in_features, 1)
     )
-    
     state_dict = torch.load(model_path, map_location=torch.device('cpu'))
     model.load_state_dict(state_dict)
     model.eval()
-    return model
+    models_list.append(model)
+
+    model_path = os.path.join(os.path.dirname(__file__), model_paths['mobilenet'])
+    model = models.mobilenet_v3_small(pretrained=True)
+    for param in model.parameters():
+        param.requires_grad = False
+    for name, param in model.features[11:13].named_parameters():
+        param.requires_grad = True
+    for name, param in model.features[10].named_parameters():
+        if 'bn' in name:
+            param.requires_grad = True
+    num_features = model.classifier[0].in_features
+    model.classifier = torch.nn.Sequential(
+        torch.nn.Dropout(0.5),
+        torch.nn.Linear(num_features, 1)
+    )
+    state_dict = torch.load(model_path, map_location=torch.device('cpu'))
+    model.load_state_dict(state_dict)
+    model.eval()
+    models_list.append(model)
+
+    model_path = os.path.join(os.path.dirname(__file__), model_paths['efficientnet'])
+    model = models.efficientnet_b0(pretrained=False)
+    model.classifier = torch.nn.Sequential(
+        torch.nn.Dropout(0.4),
+        torch.nn.Linear(model.classifier[1].in_features, 1)
+    )
+    state_dict = torch.load(model_path, map_location=torch.device('cpu'))
+    model.load_state_dict(state_dict)
+    model.eval()
+    models_list.append(model)
+
+    model_path = os.path.join(os.path.dirname(__file__), model_paths['vgg'])
+    model = models.vgg16_bn(pretrained=False)
+    model.classifier[6] = torch.nn.Sequential(
+        torch.nn.Dropout(0.5),
+        torch.nn.Linear(model.classifier[6].in_features, 1)
+    )
+    state_dict = torch.load(model_path, map_location=torch.device('cpu'))
+    model.load_state_dict(state_dict)
+    model.eval()
+    models_list.append(model)
+
+    return models_list
+
+def ensemble_voting(models_list, img):
+    predictions = []
+    probabilities = []
+    
+    for model in models_list:
+        with torch.no_grad():
+            output = model(img)
+            probability = torch.sigmoid(output).item()
+            prediction = int(probability > 0.5)
+            predictions.append(prediction)
+            probabilities.append(probability if prediction == 1 else 1 - probability)
+    
+    hard_pred = round(sum(predictions) / len(predictions))
+    confidence = sum(probabilities) / len(probabilities)
+    confidence = round(confidence * 100, 2)
+    
+    return hard_pred, confidence
 
 transform = transforms.Compose([
     transforms.Grayscale(num_output_channels=3),
@@ -44,12 +107,7 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-try:
-    model = load_model()
-    print("Model loaded successfully")
-except Exception as e:
-    app.logger.error(f"Model loading failed: {e}")
-    raise RuntimeError(f"Model loading failed: {e}")
+models_list = load_models()
 
 @app.route('/')
 def index():
@@ -73,19 +131,8 @@ def analyze_image() -> tuple[Dict[str, Any], int]:
             img = img.convert('RGB')
         img = transform(img).unsqueeze(0)
 
-        with torch.no_grad():
-            output = model(img)
-            probability = torch.sigmoid(output)
-            prediction = (probability > 0.5).float()
-            confidence = probability.item() if prediction.item() == 1 else 1 - probability.item()
-            confidence = round(confidence * 100, 2)
-
-        result = "PNEUMONIA" if prediction.item() == 1 else "NORMAL"
-
-        print(f"Raw output: {output.item()}")
-        print(f"Probability: {probability.item()}")
-        print(f"Prediction: {result}")
-        print(f"Confidence: {confidence}%")
+        prediction, confidence = ensemble_voting(models_list, img)
+        result = "PNEUMONIA" if prediction == 1 else "NORMAL"
 
         return jsonify({
             'prediction': result,
@@ -93,7 +140,6 @@ def analyze_image() -> tuple[Dict[str, Any], int]:
         }), 200
 
     except Exception as e:
-        print(f"Error during prediction: {str(e)}")
         return jsonify({'error': f"Prediction failed: {str(e)}"}), 500
 
 if __name__ == '__main__':

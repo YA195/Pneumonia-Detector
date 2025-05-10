@@ -16,7 +16,7 @@ let selectedFile = null;
 dropZone.addEventListener('dragover', handleDragOver);
 dropZone.addEventListener('dragleave', handleDragLeave);
 dropZone.addEventListener('drop', handleDrop);
-browseBtn.removeEventListener('click', handleBrowseClick); // Remove any existing listeners
+browseBtn.removeEventListener('click', handleBrowseClick); 
 browseBtn.addEventListener('click', handleBrowseClick, false);
 fileInput.removeEventListener('change', handleFileSelect);
 fileInput.addEventListener('change', handleFileSelect, false);
@@ -25,7 +25,7 @@ analyzeBtn.addEventListener('click', analyzeImage);
 
 function handleBrowseClick(e) {
     e.preventDefault();
-    e.stopPropagation(); // Stop event propagation
+    e.stopPropagation(); 
     fileInput.click();
 }
 
@@ -48,7 +48,7 @@ function handleDrop(e) {
 }
 
 function handleFileSelect(e) {
-    e.preventDefault(); // Prevent default behavior
+    e.preventDefault(); 
     const files = e.target.files;
     if (files && files.length > 0) {
         handleFiles(files);
