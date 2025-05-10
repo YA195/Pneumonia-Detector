@@ -74,7 +74,7 @@ The application is deployed on an AWS EC2 instance with the following specificat
 - **vCPUs**: 2
 - **Platform**: Linux/UNIX
 - **Launch Time**: May 1, 2025, 23:25:53 GMT+0300
-### Access the application at (pneumoniadetector.space).
+### Access the application at (http://pneumoniadetector.space).
 
 
 
